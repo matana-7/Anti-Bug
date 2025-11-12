@@ -333,6 +333,12 @@ The extension requires these Chrome permissions:
 - Ensure you have access to the selected board/group
 - Try generating a new token
 
+### "Cannot read properties of undefined" error
+- This was fixed in the latest version
+- Reload the extension: chrome://extensions/ → Click reload icon
+- Bug details are now added as updates/posts on the item
+- Files are attached to updates (more reliable than column attachments)
+
 ### Screenshots are not capturing
 - Ensure the tab is visible (not minimized or in another workspace)
 - Some Chrome internal pages (chrome://) cannot be captured

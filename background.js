@@ -40,10 +40,6 @@ async function handleMessage(message, sender, sendResponse) {
         await handleFetchRecentBugs(message, sendResponse);
         break;
       
-      case 'uploadFile':
-        await handleUploadFile(message, sendResponse);
-        break;
-      
       case 'testMondayConnection':
         await handleTestConnection(message, sendResponse);
         break;
@@ -111,31 +107,35 @@ async function handleCreateBug(message, sendResponse) {
       return;
     }
     
-    mondayAPI.setToken(settings.mondayToken);
-    
-    // Upload all attachments first
-    const uploadedFiles = [];
-    for (const attachment of attachments) {
-      const result = await mondayAPI.uploadFile(attachment);
-      uploadedFiles.push(result);
+    if (!settings.selectedBoardId || !settings.selectedGroupId) {
+      sendResponse({ success: false, error: 'Please select a board and group in settings' });
+      return;
     }
     
-    // Create the bug item
+    mondayAPI.setToken(settings.mondayToken);
+    
+    // Create the bug item with attachments
+    // The mondayAPI will handle file uploads internally
     const item = await mondayAPI.createBugItem(
       settings.selectedBoardId,
       settings.selectedGroupId,
       bugData,
-      uploadedFiles
+      attachments || []
     );
     
     // Show notification
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icons/icon48.png',
-      title: 'Bug Reported Successfully',
-      message: `Bug "${bugData.description}" has been created on Monday.com`,
-      priority: 2
-    });
+    try {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon48.png',
+        title: 'Bug Reported Successfully',
+        message: `Bug "${bugData.description}" has been created on Monday.com`,
+        priority: 2
+      });
+    } catch (notifError) {
+      console.error('Notification failed:', notifError);
+      // Don't fail the whole operation for notification errors
+    }
     
     sendResponse({ success: true, item });
   } catch (error) {
@@ -163,27 +163,6 @@ async function handleFetchRecentBugs(message, sendResponse) {
     sendResponse({ success: true, bugs });
   } catch (error) {
     console.error('Fetch bugs failed:', error);
-    sendResponse({ success: false, error: error.message });
-  }
-}
-
-async function handleUploadFile(message, sendResponse) {
-  const { file } = message;
-  
-  try {
-    const settings = await chrome.storage.sync.get(['mondayToken']);
-    
-    if (!settings.mondayToken) {
-      sendResponse({ success: false, error: 'Monday.com not connected' });
-      return;
-    }
-    
-    mondayAPI.setToken(settings.mondayToken);
-    const result = await mondayAPI.uploadFile(file);
-    
-    sendResponse({ success: true, fileId: result.id, fileUrl: result.url });
-  } catch (error) {
-    console.error('File upload failed:', error);
     sendResponse({ success: false, error: error.message });
   }
 }

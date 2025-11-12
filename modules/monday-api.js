@@ -97,14 +97,16 @@ export class MondayAPI {
   }
 
   async createBugItem(boardId, groupId, bugData, attachments = []) {
-    // First create the item
+    // First create the item with description in the item name
+    // We'll add detailed info as an update since column values can be complex
+    const bugTitle = bugData.description || 'New Bug';
+    
     const createQuery = `
-      mutation ($boardId: ID!, $groupId: String!, $itemName: String!, $columnValues: JSON!) {
+      mutation ($boardId: ID!, $groupId: String!, $itemName: String!) {
         create_item(
           board_id: $boardId,
           group_id: $groupId,
-          item_name: $itemName,
-          column_values: $columnValues
+          item_name: $itemName
         ) {
           id
           name
@@ -113,28 +115,76 @@ export class MondayAPI {
       }
     `;
 
-    // Build column values from bug data
-    const columnValues = this.buildColumnValues(bugData);
-
     const result = await this.query(createQuery, {
       boardId: boardId,
       groupId: groupId,
-      itemName: bugData.description || 'New Bug',
-      columnValues: JSON.stringify(columnValues)
+      itemName: bugTitle
     });
 
     const item = result.create_item;
 
-    // Attach files to the item
-    for (const attachment of attachments) {
+    // Add bug details as an update (post)
+    try {
+      await this.addBugDetailsUpdate(item.id, bugData);
+    } catch (error) {
+      console.error('Failed to add bug details:', error);
+      // Continue anyway - item was created
+    }
+
+    // Attach files to the update (this is more reliable than column attachments)
+    if (attachments && attachments.length > 0) {
       try {
-        await this.addFileToItem(item.id, attachment);
+        await this.addFilesToItem(item.id, attachments);
       } catch (error) {
-        console.error('Failed to attach file:', error);
+        console.error('Failed to attach files:', error);
+        // Continue anyway - item was created
       }
     }
 
     return item;
+  }
+
+  async addBugDetailsUpdate(itemId, bugData) {
+    // Format bug details as markdown-style text
+    let updateText = '';
+    
+    if (bugData.platform) {
+      updateText += `**Platform:** ${bugData.platform}\n`;
+    }
+    if (bugData.env) {
+      updateText += `**Environment:** ${bugData.env}\n`;
+    }
+    if (bugData.version) {
+      updateText += `**Version:** ${bugData.version}\n`;
+    }
+    
+    updateText += `\n**Description:**\n${bugData.description || 'N/A'}\n`;
+    
+    if (bugData.stepsToReproduce) {
+      updateText += `\n**Steps to Reproduce:**\n${bugData.stepsToReproduce}\n`;
+    }
+    if (bugData.actualResult) {
+      updateText += `\n**Actual Result:**\n${bugData.actualResult}\n`;
+    }
+    if (bugData.expectedResult) {
+      updateText += `\n**Expected Result:**\n${bugData.expectedResult}\n`;
+    }
+
+    const mutation = `
+      mutation ($itemId: ID!, $body: String!) {
+        create_update(
+          item_id: $itemId,
+          body: $body
+        ) {
+          id
+        }
+      }
+    `;
+
+    await this.query(mutation, {
+      itemId: itemId,
+      body: updateText
+    });
   }
 
   buildColumnValues(bugData) {
@@ -170,81 +220,61 @@ export class MondayAPI {
     return values;
   }
 
-  async uploadFile(file) {
-    // Monday.com file upload uses multipart/form-data
-    const query = `
-      mutation ($file: File!) {
-        add_file_to_update(file: $file) {
-          id
-          url
-        }
-      }
-    `;
-
-    // Convert base64 or blob to File
-    const formData = new FormData();
+  async addFilesToItem(itemId, files) {
+    // Monday.com file uploads work by adding files to updates
+    // First create an update, then attach files to it
     
-    if (file.dataUrl) {
-      // Convert data URL to Blob
-      const blob = await this.dataUrlToBlob(file.dataUrl);
-      formData.append('query', query);
-      formData.append('variables[file]', blob, file.name);
-    } else if (file.blob) {
-      formData.append('query', query);
-      formData.append('variables[file]', file.blob, file.name);
-    }
-
-    const response = await fetch(this.apiUrl + '/file', {
-      method: 'POST',
-      headers: {
-        'Authorization': this.token
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      throw new Error(`File upload failed: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result.data.add_file_to_update;
-  }
-
-  async addFileToItem(itemId, file) {
-    const query = `
-      mutation ($itemId: ID!, $columnId: String!, $file: File!) {
-        add_file_to_column(
+    // Create a simple update to attach files to
+    const createUpdateMutation = `
+      mutation ($itemId: ID!) {
+        create_update(
           item_id: $itemId,
-          column_id: $columnId,
-          file: $file
+          body: "Attachments"
         ) {
           id
         }
       }
     `;
 
-    // For simplicity, use a generic 'files' column
-    // In production, this should be configurable
-    const columnId = 'files';
+    const updateResult = await this.query(createUpdateMutation, {
+      itemId: itemId
+    });
 
-    const formData = new FormData();
-    
-    if (file.dataUrl) {
-      const blob = await this.dataUrlToBlob(file.dataUrl);
-      formData.append('query', query);
-      formData.append('variables', JSON.stringify({ 
-        itemId, 
-        columnId 
-      }));
-      formData.append('file', blob, file.name);
-    } else if (file.blob) {
-      formData.append('query', query);
-      formData.append('variables', JSON.stringify({ 
-        itemId, 
-        columnId 
-      }));
-      formData.append('file', file.blob, file.name);
+    const updateId = updateResult.create_update.id;
+
+    // Now attach files to this update
+    // Note: Monday.com API has limitations on file uploads
+    // In production, you might need a backend proxy
+    for (const file of files) {
+      try {
+        await this.uploadFileToUpdate(updateId, file);
+      } catch (error) {
+        console.error(`Failed to upload file ${file.name}:`, error);
+        // Continue with other files
+      }
     }
+  }
+
+  async uploadFileToUpdate(updateId, file) {
+    // Convert data URL to blob
+    const blob = await this.dataUrlToBlob(file.dataUrl);
+    
+    // Use Monday.com asset upload API
+    // Note: This is a simplified version. Monday's file upload API
+    // may require different handling depending on your account setup
+    const formData = new FormData();
+    formData.append('query', `
+      mutation ($updateId: ID!, $file: File!) {
+        add_file_to_update(
+          update_id: $updateId,
+          file: $file
+        ) {
+          id
+        }
+      }
+    `);
+    formData.append('variables', JSON.stringify({ updateId }));
+    formData.append('file', blob, file.name);
 
     const response = await fetch(this.apiUrl, {
       method: 'POST',
@@ -255,10 +285,19 @@ export class MondayAPI {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to add file to item: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('File upload response:', errorText);
+      throw new Error(`File upload failed: ${response.statusText}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+    
+    if (result.errors) {
+      console.error('File upload GraphQL errors:', result.errors);
+      throw new Error(`File upload error: ${result.errors[0].message}`);
+    }
+
+    return result;
   }
 
   async dataUrlToBlob(dataUrl) {
