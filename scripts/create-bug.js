@@ -545,7 +545,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Show progress
       document.getElementById('uploadProgress').style.display = 'block';
-      updateProgress(30, 'Creating bug item...');
+      updateProgress(10, 'Preparing attachments...');
 
       console.log('Preparing bug data and attachments...');
 
@@ -555,6 +555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         pendingAttachments: attachedFiles
       });
 
+      updateProgress(20, 'Creating bug item...');
       console.log('Sending message to background...');
 
       // Create bug via background script
@@ -580,12 +581,28 @@ document.addEventListener('DOMContentLoaded', async () => {
           
           if (response && response.success) {
             console.log('Bug created successfully!', response.item);
-            updateProgress(100, 'Bug created successfully!');
             
-            // Check if there were any file upload issues
-            if (response.uploadResults && response.uploadResults.failed && response.uploadResults.failed.length > 0) {
-              const failedFiles = response.uploadResults.failed.map(f => f.name).join(', ');
-              showError(`Bug created, but some files failed to upload: ${failedFiles}. Please upload them manually.`);
+            // Show upload results
+            if (response.uploadResults) {
+              const uploaded = response.uploadResults.uploaded || [];
+              const failed = response.uploadResults.failed || [];
+              
+              if (uploaded.length > 0) {
+                updateProgress(90, `Uploaded ${uploaded.length} file(s)...`);
+              }
+              
+              // Check if there were any file upload issues
+              if (failed.length > 0) {
+                const failedFiles = failed.map(f => f.name).join(', ');
+                showError(`Bug created, but ${failed.length} file(s) failed to upload: ${failedFiles}. Please upload them manually.`);
+                updateProgress(100, `Bug created (${failed.length} upload failed)`);
+              } else if (uploaded.length > 0) {
+                updateProgress(100, `Bug created with ${uploaded.length} attachment(s)! ✓`);
+              } else {
+                updateProgress(100, 'Bug created successfully! ✓');
+              }
+            } else {
+              updateProgress(100, 'Bug created successfully! ✓');
             }
             
             setTimeout(() => {
@@ -594,7 +611,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 chrome.tabs.create({ url: response.item.url });
               }
               window.close();
-            }, 1500);
+            }, 2000);
           } else {
             // Show detailed error message
             const errorMsg = response ? response.error : 'Unknown error - no response received';

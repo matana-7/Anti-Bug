@@ -351,11 +351,13 @@ export class MondayAPI {
     };
 
     // Create a simple update to attach files to
+    console.log(`Creating update for ${files.length} file(s) on item ${itemId}...`);
+    
     const createUpdateMutation = `
       mutation ($itemId: ID!) {
         create_update(
           item_id: $itemId,
-          body: "Attachments"
+          body: "📎 Attachments"
         ) {
           id
         }
@@ -366,7 +368,13 @@ export class MondayAPI {
       itemId: itemId
     });
 
+    if (!updateResult.create_update || !updateResult.create_update.id) {
+      console.error('Failed to create update:', updateResult);
+      throw new Error('Could not create update for file attachments');
+    }
+
     const updateId = updateResult.create_update.id;
+    console.log(`✓ Update created with ID: ${updateId}`);
 
     // Upload files with progress tracking
     for (let i = 0; i < files.length; i++) {
@@ -458,29 +466,41 @@ export class MondayAPI {
 
       console.log(`File size: ${(blob.size / 1024).toFixed(2)} KB, MIME: ${mimeType}`);
 
-      // Use Monday.com's file upload API - CORRECT FORMAT
+      // Use Monday.com's file upload API with proper multipart format
       const formData = new FormData();
       
-      // Monday.com expects the mutation WITHOUT variables in query
-      formData.append('query', `
-        mutation add_file_to_update($file: File!) {
-          add_file_to_update(update_id: ${updateId}, file: $file) {
-            id
-            name
-            url
-          }
+      // Monday.com multipart upload format
+      // 1. The mutation with null placeholder
+      const mutation = `mutation ($file: File!) {
+        add_file_to_update (update_id: ${updateId}, file: $file) {
+          id
+          name
+          url
+          file_extension
+          file_size
         }
-      `);
-
-      // Add the file - Monday.com expects this exact format
-      formData.append('variables[file]', blob, file.name);
+      }`;
+      
+      formData.append('query', mutation);
+      
+      // 2. The map that links the file to the variable
+      const map = {
+        "image": ["variables.file"]
+      };
+      formData.append('map', JSON.stringify(map));
+      
+      // 3. The actual file
+      formData.append('image', blob, file.name);
 
       console.log('Sending upload request to Monday.com...');
+      console.log('Mutation:', mutation);
+      console.log('File name:', file.name, 'Size:', blob.size);
+      
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
           'Authorization': this.token
-          // Don't set Content-Type - browser will set it with boundary
+          // Don't set Content-Type - browser will set it with multipart boundary
         },
         body: formData
       });

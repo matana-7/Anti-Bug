@@ -2,6 +2,37 @@
 
 All notable changes to the Bug Reporter extension will be documented in this file.
 
+## [1.3.1] - 2025-11-12
+
+### 🚨 CRITICAL FILE UPLOAD FIX
+
+Fixed file upload to Monday.com - files and screenshots now appear in items.
+
+#### Fixed
+- **File upload to Monday.com** - Corrected multipart upload format to match Monday.com API specification
+- **Upload format** - Now uses proper three-part format: query, map, and file
+- **Map parameter** - Added JSON map linking form field to GraphQL variable
+- **Update creation** - Enhanced validation and error handling
+
+#### Added
+- **Enhanced UI feedback** - Progress shows "Preparing attachments", "Uploaded N files", "Bug created with N attachments ✓"
+- **Upload status** - Clear indication of upload success/failure with file counts
+- **Comprehensive logging** - Console shows each upload step for debugging
+- **Upload confirmation** - Emoji checkmark in success message
+
+#### Technical
+- `modules/monday-api.js`: Fixed multipart upload format with map parameter (lines 461-498)
+- `modules/monday-api.js`: Enhanced update creation validation (lines 354-377)
+- `scripts/create-bug.js`: Added "Preparing attachments" progress step (lines 546-558)
+- `scripts/create-bug.js`: Enhanced upload results display (lines 582-614)
+- `background.js`: Added upload results logging (lines 152-163)
+
+#### Impact
+- ✅ All file types now upload to Monday.com (images, screenshots, HAR, videos, PDFs)
+- ✅ Files appear in Monday items under "📎 Attachments" update
+- ✅ Clear user feedback during upload process
+- ✅ Easy debugging with comprehensive console logs
+
 ## [1.3.0] - 2025-11-12
 
 ### 🎉 FINAL ROUND OF FIXES

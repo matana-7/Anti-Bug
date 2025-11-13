@@ -151,12 +151,16 @@ async function handleCreateBug(message, sendResponse) {
     
     // Create the bug item with attachments
     // The mondayAPI will handle file uploads internally
+    console.log(`Creating bug item with ${attachments.length} attachments...`);
     const item = await mondayAPI.createBugItem(
       settings.selectedBoardId,
       settings.selectedGroupId,
       bugData,
       attachments
     );
+    
+    console.log('Bug creation complete:', item);
+    console.log('Upload results:', item.uploadResults);
     
     // Clean up stored attachments
     await chrome.storage.local.remove(['pendingAttachments']);
