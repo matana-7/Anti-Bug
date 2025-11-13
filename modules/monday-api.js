@@ -211,11 +211,26 @@ export class MondayAPI {
 
     // Attach files to the update (this is more reliable than column attachments)
     if (attachments && attachments.length > 0) {
+      console.log(`Attaching ${attachments.length} files to item ${item.id}...`);
       try {
-        await this.addFilesToItem(item.id, attachments);
+        const uploadResults = await this.addFilesToItem(item.id, attachments);
+        console.log('File upload results:', uploadResults);
+        
+        // Return item with upload results
+        return {
+          ...item,
+          uploadResults: uploadResults
+        };
       } catch (error) {
         console.error('Failed to attach files:', error);
-        // Continue anyway - item was created
+        // Return item with error info but don't fail the whole operation
+        return {
+          ...item,
+          uploadResults: {
+            uploaded: [],
+            failed: attachments.map(f => ({ name: f.name, error: error.message }))
+          }
+        };
       }
     }
 

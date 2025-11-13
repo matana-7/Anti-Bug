@@ -75,8 +75,21 @@ function setupEventListeners() {
 
   // Save/Cancel
   document.getElementById('saveAnnotateBtn').addEventListener('click', saveAnnotation);
-  document.getElementById('cancelAnnotateBtn').addEventListener('click', () => {
-    window.close();
+  document.getElementById('cancelAnnotateBtn').addEventListener('click', async () => {
+    console.log('Cancelling annotation, returning to create-bug...');
+    
+    // Set return flag without saving annotation
+    await chrome.storage.local.set({ 
+      returnToCreateBug: true
+    });
+    
+    // Open create-bug page in a new tab
+    chrome.tabs.create({ url: chrome.runtime.getURL('create-bug.html') });
+    
+    // Close annotation window
+    setTimeout(() => {
+      window.close();
+    }, 100);
   });
 
   // Canvas events
@@ -89,8 +102,13 @@ function setupEventListeners() {
 function handleMouseDown(e) {
   isDrawing = true;
   const rect = canvas.getBoundingClientRect();
-  startX = e.clientX - rect.left;
-  startY = e.clientY - rect.top;
+  
+  // Calculate scale to handle canvas vs display size differences
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  
+  startX = (e.clientX - rect.left) * scaleX;
+  startY = (e.clientY - rect.top) * scaleY;
 
   if (currentTool === 'pen') {
     ctx.beginPath();
@@ -104,8 +122,13 @@ function handleMouseMove(e) {
   if (!isDrawing) return;
 
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  
+  // Calculate scale to handle canvas vs display size differences
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
 
   ctx.strokeStyle = currentColor;
   ctx.lineWidth = currentLineWidth;
@@ -236,17 +259,24 @@ function clearCanvas() {
 }
 
 async function saveAnnotation() {
+  console.log('Saving annotation...');
+  
   // Get annotated image as data URL
   const dataUrl = canvas.toDataURL('image/png');
   
-  // Store in local storage for the create-bug page to pick up
-  await chrome.storage.local.set({ annotatedScreenshot: dataUrl });
+  // Store in local storage AND set return flag
+  await chrome.storage.local.set({ 
+    annotatedScreenshot: dataUrl,
+    returnToCreateBug: true
+  });
   
-  // Close annotation window
-  window.close();
+  console.log('Annotation saved, reopening create-bug page...');
   
-  // Reopen create-bug page after a moment
+  // Open create-bug page in a new tab
+  chrome.tabs.create({ url: chrome.runtime.getURL('create-bug.html') });
+  
+  // Close annotation window after a moment
   setTimeout(() => {
-    chrome.tabs.create({ url: 'create-bug.html' });
+    window.close();
   }, 100);
 }

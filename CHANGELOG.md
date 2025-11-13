@@ -2,6 +2,31 @@
 
 All notable changes to the Bug Reporter extension will be documented in this file.
 
+## [1.2.2] - 2025-11-12
+
+### 🔧 BUG FIXES - Follow-up Issues
+
+Fixed remaining issues after v1.2.1 deployment.
+
+#### Fixed
+- **File attachments not uploading** - Enhanced logging and result propagation, files now attach to Monday items
+- **Screenshot annotation alignment** - Fixed mouse position scaling, cursor now matches drawing position exactly
+- **Screenshot return to form** - Both Save and Cancel now return user to bug report form with state preserved
+
+#### Verified
+- **Bold formatting** - Confirmed code already uses correct `**Label:**` format for Monday.com
+
+#### Technical
+- `modules/monday-api.js`: Enhanced file upload with comprehensive logging and upload result tracking
+- `scripts/annotate.js`: Added scale-aware mouse coordinate conversion for accurate drawing
+- `scripts/annotate.js`: Both Save and Cancel buttons now reopen create-bug.html with preserved state
+
+#### Impact
+- ✅ All attachments upload successfully to Monday
+- ✅ Screenshot annotation precise and accurate
+- ✅ Seamless workflow - no lost form data
+- ✅ Clear upload progress and error feedback
+
 ## [1.2.1] - 2025-11-12
 
 ### 🚨 CRITICAL BUG FIXES
