@@ -244,37 +244,37 @@ export class MondayAPI {
     
     // Add platform info
     if (bugData.platform) {
-      updateText += `**Platform:** ${this.escapeMarkdown(bugData.platform)}\n`;
+      updateText += `**Platform:** ${bugData.platform}\n`;
     }
     
     // Add environment
     if (bugData.env) {
-      updateText += `**ENV:** ${this.escapeMarkdown(bugData.env)}\n`;
+      updateText += `**ENV:** ${bugData.env}\n`;
     }
     
     // Add version
     if (bugData.version) {
-      updateText += `**Version:** ${this.escapeMarkdown(bugData.version)}\n`;
+      updateText += `**Version:** ${bugData.version}\n`;
     }
     
     // Add description
     if (bugData.description) {
-      updateText += `\n**Description:** ${this.escapeMarkdown(bugData.description)}\n`;
+      updateText += `\n**Description:**\n${bugData.description}\n`;
     }
     
     // Add steps to reproduce
     if (bugData.stepsToReproduce) {
-      updateText += `\n**Steps to reproduce:**\n${this.escapeMarkdown(bugData.stepsToReproduce)}\n`;
+      updateText += `\n**Steps to reproduce:**\n${bugData.stepsToReproduce}\n`;
     }
     
     // Add actual result
     if (bugData.actualResult) {
-      updateText += `\n**Actual result:** ${this.escapeMarkdown(bugData.actualResult)}\n`;
+      updateText += `\n**Actual result:**\n${bugData.actualResult}\n`;
     }
     
     // Add expected result
     if (bugData.expectedResult) {
-      updateText += `\n**Expected result:** ${this.escapeMarkdown(bugData.expectedResult)}\n`;
+      updateText += `\n**Expected result:**\n${bugData.expectedResult}\n`;
     }
     
     // Add logs note
@@ -427,6 +427,8 @@ export class MondayAPI {
     const RETRY_DELAY = 1000; // Start with 1 second
 
     try {
+      console.log(`Uploading file ${file.name} to update ${updateId} (attempt ${retryCount + 1})...`);
+      
       // Convert data URL to blob with MIME type detection
       let blob;
       let mimeType = file.type || 'application/octet-stream';
@@ -445,6 +447,7 @@ export class MondayAPI {
         blob = file.blob;
         mimeType = blob.type || mimeType;
       } else {
+        console.error('File missing dataUrl or blob:', file);
         throw new Error('File must have dataUrl or blob property');
       }
 
@@ -453,16 +456,15 @@ export class MondayAPI {
         blob = new Blob([blob], { type: mimeType });
       }
 
-      // Use Monday.com's file upload API
+      console.log(`File size: ${(blob.size / 1024).toFixed(2)} KB, MIME: ${mimeType}`);
+
+      // Use Monday.com's file upload API - CORRECT FORMAT
       const formData = new FormData();
       
-      // Add the GraphQL mutation
+      // Monday.com expects the mutation WITHOUT variables in query
       formData.append('query', `
-        mutation ($file: File!) {
-          add_file_to_update(
-            update_id: ${updateId},
-            file: $file
-          ) {
+        mutation add_file_to_update($file: File!) {
+          add_file_to_update(update_id: ${updateId}, file: $file) {
             id
             name
             url
@@ -470,9 +472,10 @@ export class MondayAPI {
         }
       `);
 
-      // Add the file with proper name and type
+      // Add the file - Monday.com expects this exact format
       formData.append('variables[file]', blob, file.name);
 
+      console.log('Sending upload request to Monday.com...');
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
@@ -482,19 +485,28 @@ export class MondayAPI {
         body: formData
       });
 
+      console.log(`Upload response status: ${response.status}`);
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('File upload response:', errorText);
+        console.error('File upload HTTP error:', errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
+      console.log('Upload result:', result);
       
       if (result.errors && result.errors.length > 0) {
-        console.error('File upload GraphQL errors:', result.errors);
+        console.error('File upload GraphQL errors:', JSON.stringify(result.errors, null, 2));
         throw new Error(result.errors[0].message);
       }
 
+      if (!result.data || !result.data.add_file_to_update) {
+        console.error('No file upload data in response:', result);
+        throw new Error('File upload succeeded but no data returned');
+      }
+
+      console.log(`✓ File ${file.name} uploaded successfully`);
       return result;
 
     } catch (error) {

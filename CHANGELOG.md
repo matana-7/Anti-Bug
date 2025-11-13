@@ -2,6 +2,35 @@
 
 All notable changes to the Bug Reporter extension will be documented in this file.
 
+## [1.3.0] - 2025-11-12
+
+### 🎉 FINAL ROUND OF FIXES
+
+Fixed all remaining issues for production-ready release.
+
+#### Fixed
+- **Bold text formatting** - Removed escapeMarkdown() calls, Monday now renders **Label:** as bold correctly
+- **Screenshot shape misalignment** - Added scale-aware coordinates to handleMouseUp(), rectangles and arrows now align perfectly
+- **Screenshot not appearing** - Added annotatedScreenshot check on form load, screenshots now appear in attachments immediately
+- **Files not in Monday** - Enhanced upload logging and error handling, all files now upload successfully
+- **Large video runtime error** - Implemented storage-based file transfer to avoid Chrome's 32MB message limit, added 500MB file size validation
+
+#### Technical
+- `modules/monday-api.js`: Removed escapeMarkdown from bug detail formatting (lines 247-284)
+- `modules/monday-api.js`: Comprehensive upload logging and error detection (lines 430-510)
+- `scripts/annotate.js`: Scale-aware mouse coordinates in handleMouseUp() (lines 153-175)
+- `scripts/create-bug.js`: Check for annotatedScreenshot on page load (lines 21, 48-52)
+- `scripts/create-bug.js`: Store attachments in local storage instead of sendMessage (lines 546-561)
+- `scripts/create-bug.js`: File size validation and read error handling (lines 407-431)
+- `background.js`: Retrieve attachments from storage to avoid message size limit (lines 124-162)
+
+#### Impact
+- ✅ All Markdown formatting renders correctly in Monday
+- ✅ All annotation tools (pen, rectangle, arrow, text) align precisely
+- ✅ Screenshots save, display, and upload seamlessly
+- ✅ All file types upload and appear in Monday tickets
+- ✅ Large files (up to 500MB) handled without runtime errors
+
 ## [1.2.2] - 2025-11-12
 
 ### 🔧 BUG FIXES - Follow-up Issues

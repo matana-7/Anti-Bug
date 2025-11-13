@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const autoAttachHAR = document.getElementById('autoAttachHAR');
 
   // Check if we're returning from a screenshot capture
-  const state = await chrome.storage.local.get(['returnToCreateBug', 'createBugState']);
+  const state = await chrome.storage.local.get(['returnToCreateBug', 'createBugState', 'annotatedScreenshot']);
   if (state.returnToCreateBug && state.createBugState) {
     // Restore form state
     const saved = state.createBugState;
@@ -42,6 +42,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           displayFile(file);
         }
       });
+    }
+    
+    // Check for new screenshot from annotation
+    if (state.annotatedScreenshot) {
+      console.log('Found annotated screenshot, adding to attachments...');
+      addScreenshot(state.annotatedScreenshot);
+      await chrome.storage.local.remove(['annotatedScreenshot']);
     }
     
     // Clear the return flag
@@ -394,9 +401,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filesList = document.getElementById('filesList');
     
     Array.from(files).forEach(file => {
-      // Check file size (limit to 50MB)
-      if (file.size > 50 * 1024 * 1024) {
-        alert(`File ${file.name} is too large (max 50MB)`);
+      // Check file size (Monday.com limit is 500MB)
+      const MAX_SIZE = 500 * 1024 * 1024; // 500MB
+      if (file.size > MAX_SIZE) {
+        const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+        showError(`File "${file.name}" is too large (${sizeMB} MB). Maximum size is 500 MB.`);
         return;
       }
 
@@ -412,6 +421,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         attachedFiles.push(fileData);
         displayFile(fileData);
+      };
+      reader.onerror = (e) => {
+        console.error('File read error:', e);
+        showError(`Failed to read file "${file.name}". Please try again.`);
       };
       reader.readAsDataURL(file);
     });
@@ -534,14 +547,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('uploadProgress').style.display = 'block';
       updateProgress(30, 'Creating bug item...');
 
+      console.log('Preparing bug data and attachments...');
+
+      // Store attachments in local storage to avoid message size limit
+      // Background script will read them from there
+      await chrome.storage.local.set({
+        pendingAttachments: attachedFiles
+      });
+
       console.log('Sending message to background...');
 
       // Create bug via background script
+      // Send only metadata, not the actual file data
       chrome.runtime.sendMessage(
         {
           action: 'createBug',
           bugData: bugData,
-          attachments: attachedFiles
+          attachmentCount: attachedFiles.length
         },
         (response) => {
           console.log('Received response from background:', response);

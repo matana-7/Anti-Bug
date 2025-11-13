@@ -122,9 +122,11 @@ async function handleCaptureScreenshot(message, sendResponse) {
 }
 
 async function handleCreateBug(message, sendResponse) {
-  const { bugData, attachments } = message;
+  const { bugData, attachmentCount } = message;
   
   try {
+    console.log(`Creating bug with ${attachmentCount} attachments...`);
+    
     const settings = await chrome.storage.sync.get(['mondayToken', 'selectedBoardId', 'selectedGroupId']);
     
     if (!settings.mondayToken) {
@@ -137,6 +139,14 @@ async function handleCreateBug(message, sendResponse) {
       return;
     }
     
+    // Retrieve attachments from local storage (avoids message size limit)
+    let attachments = [];
+    if (attachmentCount > 0) {
+      const storage = await chrome.storage.local.get(['pendingAttachments']);
+      attachments = storage.pendingAttachments || [];
+      console.log(`Retrieved ${attachments.length} attachments from storage`);
+    }
+    
     mondayAPI.setToken(settings.mondayToken);
     
     // Create the bug item with attachments
@@ -145,8 +155,11 @@ async function handleCreateBug(message, sendResponse) {
       settings.selectedBoardId,
       settings.selectedGroupId,
       bugData,
-      attachments || []
+      attachments
     );
+    
+    // Clean up stored attachments
+    await chrome.storage.local.remove(['pendingAttachments']);
     
     // Show notification
     try {
