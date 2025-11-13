@@ -466,14 +466,25 @@ export class MondayAPI {
 
       console.log(`File size: ${(blob.size / 1024).toFixed(2)} KB, MIME: ${mimeType}`);
 
-      // Monday.com uses a separate file upload endpoint (not GraphQL)
-      // They don't support GraphQL multipart uploads
-      // Instead, use their REST API: https://api.monday.com/v2/file
+      // Monday.com file upload endpoint with variable reference
+      // The /v2/file endpoint expects: query (with $file variable) + file field
       
-      console.log('Uploading file to Monday.com using REST API...');
+      console.log('Uploading file to Monday.com file upload endpoint...');
       
       const formData = new FormData();
-      formData.append('query', `mutation { add_file_to_update (update_id: ${updateId}) { id } }`);
+      
+      // Query must include the $file variable and reference it in the mutation
+      const mutation = `mutation add_file($file: File!) { 
+        add_file_to_update(update_id: ${updateId}, file: $file) { 
+          id 
+          name 
+          url 
+          file_extension 
+          file_size 
+        } 
+      }`;
+      
+      formData.append('query', mutation);
       formData.append('file', blob, file.name);
       
       console.log('Upload request:');

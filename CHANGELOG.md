@@ -2,6 +2,38 @@
 
 All notable changes to the Bug Reporter extension will be documented in this file.
 
+## [1.3.5] - 2025-11-12
+
+### 🔧 Fixed - CRITICAL
+
+**File Upload - Fixed Missing File Argument**
+
+- **FIX**: Added `$file` variable to mutation query
+  - Error was: "Field 'add_file_to_update' is missing required arguments: file"
+  - v1.3.4 mutation didn't include the file argument reference
+- **Correct Mutation**: Must declare `$file` variable and pass to mutation
+  ```javascript
+  mutation add_file($file: File!) {
+    add_file_to_update(update_id: 123, file: $file) { id }
+  }
+  ```
+- **Form Data**: File passed as 'file' field in multipart form
+  - Monday.com's `/v2/file` endpoint maps 'file' field to `$file` variable
+
+**Impact:**
+- ✅ Mutation now includes required file argument
+- ✅ File properly passed to add_file_to_update
+- ✅ No more "missing required arguments" error
+- ✅ Files upload successfully
+
+### 🐛 Resolved Issues
+
+- Fixed: "Field 'add_file_to_update' is missing required arguments: file"
+- Fixed: Mutation now declares and uses $file variable
+- Fixed: File field in FormData correctly maps to mutation variable
+
+---
+
 ## [1.3.4] - 2025-11-12
 
 ### 🔧 Fixed - CRITICAL
