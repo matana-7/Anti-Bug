@@ -379,33 +379,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     dropdownPanel.className = 'status-dropdown-panel';
     dropdownPanel.style.display = 'none';
     
-    // Map Monday color names to hex codes
-    const mondayColorMap = {
-      'green': '#00c875',
-      'bright-green': '#9cd326',
-      'lime': '#9cd326',
-      'red': '#e2445c',
-      'dark-red': '#bb3354',
-      'orange': '#fdab3d',
-      'yellow': '#ffcb00',
-      'blue': '#0086c0',
-      'dark-blue': '#579bfc',
-      'aquamarine': '#4eccc6',
-      'purple': '#a25ddc',
-      'dark-purple': '#784bd1',
-      'pink': '#ff158a',
-      'magenta': '#ff5ac4',
-      'gray': '#c4c4c4',
-      'grey': '#c4c4c4',
-      'dark-gray': '#808080',
-      'dark-grey': '#808080',
-      'black': '#333333',
-      'brown': '#7e3b3a',
-      'peach': '#ffadad',
-      'berry': '#e44258',
-      'indigo': '#401694'
-    };
-    
     // Store selected value
     let selectedValue = '';
     
@@ -429,20 +402,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         option.dataset.value = labelText;
         option.dataset.labelId = labelId;
         
-        // Get color
+        // Get color - Monday already returns hex codes!
         let colorCode = '#333333';
         let colorName = 'black';
         
         if (column.settings.labels_colors && column.settings.labels_colors[labelId]) {
           const colorInfo = column.settings.labels_colors[labelId];
-          colorName = colorInfo.color || 'black';
-          colorCode = mondayColorMap[colorName.toLowerCase()] || colorCode;
+          // Monday gives us the hex code directly in the 'color' field!
+          colorCode = colorInfo.color || '#333333';
+          colorName = colorInfo.var_name || 'black';
           
-          console.log(`Label "${labelText}" (${labelId}):`, {
-            colorInfo,
-            colorName,
-            mappedColorCode: colorCode
-          });
+          console.log(`Label "${labelText}" (${labelId}): color=${colorCode}, var_name=${colorName}`);
         } else {
           console.warn(`No color info for label "${labelText}" (${labelId})`);
         }
