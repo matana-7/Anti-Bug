@@ -183,6 +183,73 @@ export class MondayAPI {
     return [];
   }
 
+  async fetchBoardColumns(boardId) {
+    console.log('Fetching columns for board:', boardId);
+    
+    const query = `
+      query ($boardId: [ID!]!) {
+        boards(ids: $boardId) {
+          columns {
+            id
+            title
+            type
+            settings_str
+          }
+        }
+      }
+    `;
+
+    const data = await this.query(query, { boardId: [boardId] });
+
+    if (data.boards && data.boards[0]) {
+      const columns = data.boards[0].columns;
+      console.log(`Fetched ${columns.length} columns`);
+      
+      // Parse settings_str for each column to get additional metadata
+      return columns.map(col => {
+        let settings = {};
+        try {
+          if (col.settings_str) {
+            settings = JSON.parse(col.settings_str);
+          }
+        } catch (e) {
+          console.warn(`Failed to parse settings for column ${col.id}:`, e);
+        }
+        
+        return {
+          ...col,
+          settings
+        };
+      });
+    }
+
+    return [];
+  }
+
+  async updateColumnValues(boardId, itemId, columnValues) {
+    console.log('Updating column values for item:', itemId, columnValues);
+    
+    // Convert columnValues object to JSON string format expected by Monday
+    const columnValuesJson = JSON.stringify(columnValues);
+    
+    const mutation = `
+      mutation {
+        change_multiple_column_values(
+          board_id: ${parseInt(boardId)},
+          item_id: ${parseInt(itemId)},
+          column_values: ${JSON.stringify(columnValuesJson)}
+        ) {
+          id
+          name
+        }
+      }
+    `;
+
+    const data = await this.query(mutation);
+
+    return data.change_multiple_column_values;
+  }
+
   async createBugItem(boardId, groupId, bugData, attachments = []) {
     // Create the item with the Title field as the item name
     const bugTitle = bugData.title || bugData.description || 'New Bug';

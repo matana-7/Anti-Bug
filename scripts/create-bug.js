@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   boardSelect.addEventListener('change', async () => {
     await loadGroups();
+    await loadBoardColumns();
   });
 
   // Drag and drop functionality
@@ -238,6 +239,330 @@ document.addEventListener('DOMContentLoaded', async () => {
     const saved = await chrome.storage.sync.get(['selectedGroupId']);
     if (saved.selectedGroupId) {
       groupSelect.value = saved.selectedGroupId;
+    }
+  }
+
+  async function loadBoardColumns() {
+    const boardId = boardSelect.value;
+    const mondayFieldsSection = document.getElementById('mondayFieldsSection');
+    const mondayFieldsContainer = document.getElementById('mondayFieldsContainer');
+    
+    if (!boardId) {
+      mondayFieldsSection.style.display = 'none';
+      return;
+    }
+
+    console.log('Loading columns for board:', boardId);
+    
+    try {
+      chrome.runtime.sendMessage(
+        { action: 'fetchBoardColumns', boardId: boardId },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Runtime error loading columns:', chrome.runtime.lastError);
+            mondayFieldsSection.style.display = 'none';
+            return;
+          }
+          
+          if (response && response.success && response.columns) {
+            console.log('Loaded columns:', response.columns);
+            renderMondayFields(response.columns);
+            mondayFieldsSection.style.display = 'block';
+          } else {
+            console.error('Failed to load columns:', response);
+            mondayFieldsSection.style.display = 'none';
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error loading columns:', error);
+      mondayFieldsSection.style.display = 'none';
+    }
+  }
+
+  function renderMondayFields(columns) {
+    const container = document.getElementById('mondayFieldsContainer');
+    container.innerHTML = '';
+
+    // Filter out system columns that shouldn't be edited
+    const editableColumns = columns.filter(col => 
+      col.type !== 'name' && // Item name (already used for title)
+      col.type !== 'auto_number' && // Auto-generated
+      col.type !== 'creation_log' && // System field
+      col.type !== 'last_updated' && // System field
+      col.type !== 'board_relation' && // Complex type
+      col.type !== 'dependency' && // Complex type
+      col.type !== 'file' // Files handled separately
+    );
+
+    if (editableColumns.length === 0) {
+      container.innerHTML = '<p class="no-fields">No editable fields found in this board.</p>';
+      return;
+    }
+
+    editableColumns.forEach(column => {
+      const fieldDiv = document.createElement('div');
+      fieldDiv.className = 'monday-field';
+      fieldDiv.dataset.columnId = column.id;
+      fieldDiv.dataset.columnType = column.type;
+      
+      const label = document.createElement('label');
+      label.textContent = column.title;
+      label.className = 'monday-field-label';
+      fieldDiv.appendChild(label);
+
+      // Create input based on column type
+      const input = createColumnInput(column);
+      if (input) {
+        fieldDiv.appendChild(input);
+        container.appendChild(fieldDiv);
+      }
+    });
+  }
+
+  function createColumnInput(column) {
+    const { type, id, settings } = column;
+
+    switch (type) {
+      case 'color': // Status column
+      case 'status':
+        return createStatusInput(column);
+      
+      case 'text':
+        return createTextInput(column);
+      
+      case 'long_text':
+        return createLongTextInput(column);
+      
+      case 'numbers':
+      case 'numeric':
+        return createNumberInput(column);
+      
+      case 'date':
+        return createDateInput(column);
+      
+      case 'dropdown':
+        return createDropdownInput(column);
+      
+      case 'email':
+        return createEmailInput(column);
+      
+      case 'phone':
+        return createPhoneInput(column);
+      
+      case 'link':
+        return createLinkInput(column);
+      
+      case 'checkbox':
+        return createCheckboxInput(column);
+      
+      default:
+        console.log(`Unsupported column type: ${type}`);
+        return null;
+    }
+  }
+
+  function createStatusInput(column) {
+    const select = document.createElement('select');
+    select.className = 'monday-field-input status-input';
+    select.dataset.columnId = column.id;
+    
+    // Add empty option
+    const emptyOption = document.createElement('option');
+    emptyOption.value = '';
+    emptyOption.textContent = '-- Leave unchanged --';
+    select.appendChild(emptyOption);
+    
+    // Parse labels from settings
+    if (column.settings && column.settings.labels) {
+      Object.entries(column.settings.labels).forEach(([labelId, labelText]) => {
+        const option = document.createElement('option');
+        // Store labelText as value since Monday API expects label text, not ID
+        option.value = labelText;
+        option.textContent = labelText;
+        option.dataset.labelId = labelId;
+        
+        // Add color indicator if available
+        if (column.settings.labels_colors && column.settings.labels_colors[labelId]) {
+          const color = column.settings.labels_colors[labelId].color;
+          option.dataset.color = color;
+          option.style.fontWeight = '500';
+          
+          // Add colored bullet before text
+          const colorMap = {
+            'green': '🟢',
+            'red': '🔴',
+            'orange': '🟠',
+            'yellow': '🟡',
+            'blue': '🔵',
+            'purple': '🟣',
+            'gray': '⚪',
+            'grey': '⚪'
+          };
+          
+          const bullet = colorMap[color.toLowerCase()] || '⚫';
+          option.textContent = `${bullet} ${labelText}`;
+        }
+        
+        select.appendChild(option);
+      });
+    }
+    
+    return select;
+  }
+
+  function createTextInput(column) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'monday-field-input';
+    input.dataset.columnId = column.id;
+    input.placeholder = `Enter ${column.title.toLowerCase()}`;
+    return input;
+  }
+
+  function createLongTextInput(column) {
+    const textarea = document.createElement('textarea');
+    textarea.className = 'monday-field-input';
+    textarea.dataset.columnId = column.id;
+    textarea.placeholder = `Enter ${column.title.toLowerCase()}`;
+    textarea.rows = 3;
+    return textarea;
+  }
+
+  function createNumberInput(column) {
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'monday-field-input';
+    input.dataset.columnId = column.id;
+    input.placeholder = `Enter ${column.title.toLowerCase()}`;
+    return input;
+  }
+
+  function createDateInput(column) {
+    const input = document.createElement('input');
+    input.type = 'date';
+    input.className = 'monday-field-input';
+    input.dataset.columnId = column.id;
+    return input;
+  }
+
+  function createDropdownInput(column) {
+    const select = document.createElement('select');
+    select.className = 'monday-field-input';
+    select.dataset.columnId = column.id;
+    
+    // Add empty option
+    const emptyOption = document.createElement('option');
+    emptyOption.value = '';
+    emptyOption.textContent = '-- Leave unchanged --';
+    select.appendChild(emptyOption);
+    
+    // Parse labels from settings
+    if (column.settings && column.settings.labels) {
+      column.settings.labels.forEach(label => {
+        const option = document.createElement('option');
+        option.value = label.id || label.name;
+        option.textContent = label.name;
+        select.appendChild(option);
+      });
+    }
+    
+    return select;
+  }
+
+  function createEmailInput(column) {
+    const input = document.createElement('input');
+    input.type = 'email';
+    input.className = 'monday-field-input';
+    input.dataset.columnId = column.id;
+    input.placeholder = 'email@example.com';
+    return input;
+  }
+
+  function createPhoneInput(column) {
+    const input = document.createElement('input');
+    input.type = 'tel';
+    input.className = 'monday-field-input';
+    input.dataset.columnId = column.id;
+    input.placeholder = '+1234567890';
+    return input;
+  }
+
+  function createLinkInput(column) {
+    const input = document.createElement('input');
+    input.type = 'url';
+    input.className = 'monday-field-input';
+    input.dataset.columnId = column.id;
+    input.placeholder = 'https://example.com';
+    return input;
+  }
+
+  function createCheckboxInput(column) {
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'monday-field-checkbox';
+    checkbox.dataset.columnId = column.id;
+    return checkbox;
+  }
+
+  function collectColumnValues() {
+    const columnValues = {};
+    const fields = document.querySelectorAll('.monday-field');
+    
+    fields.forEach(field => {
+      const columnId = field.dataset.columnId;
+      const columnType = field.dataset.columnType;
+      const input = field.querySelector('.monday-field-input, .monday-field-checkbox');
+      
+      if (!input) return;
+      
+      let value = input.value;
+      
+      // Skip empty values
+      if (input.type === 'checkbox') {
+        if (!input.checked) return;
+        value = 'true';
+      } else if (!value || value === '') {
+        return;
+      }
+      
+      // Format value based on column type
+      columnValues[columnId] = formatColumnValue(columnType, value, input);
+    });
+    
+    return columnValues;
+  }
+
+  function formatColumnValue(columnType, value, input) {
+    switch (columnType) {
+      case 'status':
+      case 'color':
+        // Status columns use label object
+        return { label: value };
+      
+      case 'text':
+      case 'long_text':
+      case 'email':
+      case 'phone':
+      case 'link':
+        return value;
+      
+      case 'numbers':
+      case 'numeric':
+        return value;
+      
+      case 'date':
+        // Format date as YYYY-MM-DD
+        return { date: value };
+      
+      case 'checkbox':
+        return { checked: value === 'true' ? 'true' : 'false' };
+      
+      case 'dropdown':
+        return { ids: [parseInt(value)] };
+      
+      default:
+        return value;
     }
   }
 
@@ -543,6 +868,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         await captureHAR();
       }
 
+      // Collect Monday column values
+      const columnValues = collectColumnValues();
+      console.log('Column values:', columnValues);
+
       // Show progress
       document.getElementById('uploadProgress').style.display = 'block';
       updateProgress(10, 'Preparing attachments...');
@@ -564,7 +893,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         {
           action: 'createBug',
           bugData: bugData,
-          attachmentCount: attachedFiles.length
+          attachmentCount: attachedFiles.length,
+          columnValues: columnValues
         },
         (response) => {
           console.log('Received response from background:', response);

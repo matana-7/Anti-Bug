@@ -508,6 +508,84 @@ body {
   transform: none;
 }
 
+/* Monday Fields Section */
+.monday-fields-section {
+  margin-top: 24px;
+  padding: 20px;
+  background: #f8f9fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+}
+
+.monday-fields-section .section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #24292e;
+  margin-bottom: 8px;
+}
+
+.monday-fields-section .section-description {
+  font-size: 13px;
+  color: #6a737d;
+  margin-bottom: 16px;
+}
+
+.monday-fields-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.monday-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.monday-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #24292e;
+}
+
+.monday-field-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5da;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: white;
+}
+
+.monday-field-input:focus {
+  outline: none;
+  border-color: #0D6391;
+  box-shadow: 0 0 0 3px rgba(13, 99, 145, 0.1);
+}
+
+.monday-field-input.status-input {
+  cursor: pointer;
+}
+
+.monday-field-input.status-input option {
+  padding: 8px;
+}
+
+.monday-field-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.no-fields {
+  text-align: center;
+  color: #6a737d;
+  font-size: 13px;
+  padding: 16px;
+}
+
 /* Scrollbar */
 .form-column::-webkit-scrollbar,
 .attachments-column::-webkit-scrollbar {
