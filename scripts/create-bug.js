@@ -200,6 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (saved.selectedBoardId) {
               boardSelect.value = saved.selectedBoardId;
               await loadGroups();
+              await loadBoardColumns(); // Load columns automatically!
             }
             
             boardSelect.disabled = false;
