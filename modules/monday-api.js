@@ -246,50 +246,51 @@ export class MondayAPI {
   }
 
   async addBugDetailsUpdate(itemId, bugData) {
-    // Format bug details as markdown with bold labels
-    // Using **Label:** format for bold in Monday.com
-    let updateText = '';
+    // Format bug details with clean formatting (Monday.com doesn't support markdown)
+    let updateText = '🐛 BUG REPORT\n\n';
     
     // Add platform info
     if (bugData.platform) {
-      updateText += `**Platform:** ${bugData.platform}\n`;
+      updateText += `📱 Platform: ${bugData.platform}\n`;
     }
     
     // Add environment
     if (bugData.env) {
-      updateText += `**ENV:** ${bugData.env}\n`;
+      updateText += `🌍 ENV: ${bugData.env}\n`;
     }
     
     // Add version
     if (bugData.version) {
-      updateText += `**Version:** ${bugData.version}\n`;
+      updateText += `📦 Version: ${bugData.version}\n`;
     }
     
     // Add description
     if (bugData.description) {
-      updateText += `\n**Description:**\n${bugData.description}\n`;
+      updateText += `\n📝 Description:\n${bugData.description}\n`;
     }
     
     // Add steps to reproduce
     if (bugData.stepsToReproduce) {
-      updateText += `\n**Steps to reproduce:**\n${bugData.stepsToReproduce}\n`;
+      updateText += `\n🔢 Steps to reproduce:\n${bugData.stepsToReproduce}\n`;
     }
     
     // Add actual result
     if (bugData.actualResult) {
-      updateText += `\n**Actual result:**\n${bugData.actualResult}\n`;
+      updateText += `\n❌ Actual result:\n${bugData.actualResult}\n`;
     }
     
     // Add expected result
     if (bugData.expectedResult) {
-      updateText += `\n**Expected result:**\n${bugData.expectedResult}\n`;
+      updateText += `\n✅ Expected result:\n${bugData.expectedResult}\n`;
     }
     
     // Add logs note
-    updateText += `\n**Logs:** (HAR attached if available)\n`;
+    if (bugData.stepsToReproduce || bugData.actualResult || bugData.expectedResult) {
+      updateText += `\n📋 Logs: (HAR attached if available)`;
+    }
     
     // Add media note
-    updateText += `**Media:** (screenshots attached if available)\n`;
+    updateText += `\n📸 Media: (screenshots attached if available)`;
 
     const mutation = `
       mutation ($itemId: ID!, $body: String!) {
