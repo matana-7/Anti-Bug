@@ -472,21 +472,26 @@ export class MondayAPI {
         blob = new Blob([blob], { type: mimeType });
       }
 
-      // Upload file using Monday.com's /v2/file endpoint
-      // The file is picked up automatically from the 'file' field in FormData
+      // Monday.com Assets API approach:
+      // Upload file directly, then add as asset to update
       const formData = new FormData();
+      formData.append('query', `mutation ($file: File!) { add_file_to_update (file: $file, update_id: ${parseInt(updateId)}) { id } }`);
       
-      // Mutation WITHOUT $file variable - file is implicit
-      const query = `mutation { 
-        add_file_to_update(update_id: ${parseInt(updateId)}) { 
-          id
-          name
-          url
-        } 
-      }`;
+      // Map field is required for GraphQL multipart uploads
+      const map = {
+        "image": ["variables.file"]
+      };
+      formData.append('map', JSON.stringify(map));
       
-      formData.append('query', query);
-      formData.append('file', blob, file.name);
+      // Variables must include the file placeholder
+      const variables = {
+        "file": null,
+        "update_id": parseInt(updateId)
+      };
+      formData.append('variables', JSON.stringify(variables));
+      
+      // The actual file goes in a field that matches the map
+      formData.append('image', blob, file.name);
       
       const response = await fetch('https://api.monday.com/v2/file', {
         method: 'POST',
