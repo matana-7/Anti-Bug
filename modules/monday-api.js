@@ -474,16 +474,17 @@ export class MondayAPI {
 
       console.log(`File size: ${(blob.size / 1024).toFixed(2)} KB, MIME: ${mimeType}`);
 
-      // Monday.com file upload endpoint with variable reference
-      // The /v2/file endpoint expects: query (with $file variable) + file field
+      // Monday.com file upload endpoint
+      // For /v2/file, the mutation doesn't use $file variable
+      // The file is automatically picked up from the 'file' form field
       
       console.log('Uploading file to Monday.com file upload endpoint...');
       
       const formData = new FormData();
       
-      // Query must include BOTH $file and $update_id as variables
-      const mutation = `mutation add_file($file: File!, $update_id: Int!) { 
-        add_file_to_update(update_id: $update_id, file: $file) { 
+      // The mutation for add_file_to_update - file is implicit from form data
+      const query = `mutation { 
+        add_file_to_update(update_id: ${parseInt(updateId)}) { 
           id 
           name 
           url 
@@ -492,13 +493,7 @@ export class MondayAPI {
         } 
       }`;
       
-      // Pass variables as a JSON map
-      const variables = {
-        update_id: parseInt(updateId)
-      };
-      
-      formData.append('query', mutation);
-      formData.append('variables', JSON.stringify(variables));
+      formData.append('query', query);
       formData.append('file', blob, file.name);
       
       console.log('Upload request:');
