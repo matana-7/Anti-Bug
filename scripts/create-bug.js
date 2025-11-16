@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Add empty option
     const emptyOption = document.createElement('option');
     emptyOption.value = '';
-    emptyOption.textContent = '-- Leave unchanged --';
+    emptyOption.textContent = '✓ -- Leave unchanged --';
     select.appendChild(emptyOption);
     
     // Parse labels from settings
@@ -379,34 +379,71 @@ document.addEventListener('DOMContentLoaded', async () => {
         const option = document.createElement('option');
         // Store labelText as value since Monday API expects label text, not ID
         option.value = labelText;
-        option.textContent = labelText;
         option.dataset.labelId = labelId;
         
-        // Add color indicator if available
+        // Get color from settings
+        let colorCode = '#333333'; // Default dark gray
+        let colorName = 'black';
+        
         if (column.settings.labels_colors && column.settings.labels_colors[labelId]) {
-          const color = column.settings.labels_colors[labelId].color;
-          option.dataset.color = color;
-          option.style.fontWeight = '500';
+          const colorInfo = column.settings.labels_colors[labelId];
+          colorName = colorInfo.color || 'black';
           
-          // Add colored bullet before text
-          const colorMap = {
-            'green': '🟢',
-            'red': '🔴',
-            'orange': '🟠',
-            'yellow': '🟡',
-            'blue': '🔵',
-            'purple': '🟣',
-            'gray': '⚪',
-            'grey': '⚪'
+          // Map Monday color names to hex codes
+          const mondayColorMap = {
+            'green': '#00c875',
+            'bright-green': '#9cd326',
+            'lime': '#9cd326',
+            'red': '#e2445c',
+            'dark-red': '#bb3354',
+            'orange': '#fdab3d',
+            'yellow': '#ffcb00',
+            'blue': '#0086c0',
+            'dark-blue': '#579bfc',
+            'aquamarine': '#4eccc6',
+            'purple': '#a25ddc',
+            'dark-purple': '#784bd1',
+            'pink': '#ff158a',
+            'magenta': '#ff5ac4',
+            'gray': '#c4c4c4',
+            'grey': '#c4c4c4',
+            'dark-gray': '#808080',
+            'dark-grey': '#808080',
+            'black': '#333333',
+            'brown': '#7e3b3a',
+            'peach': '#ffadad',
+            'berry': '#e44258',
+            'indigo': '#401694'
           };
           
-          const bullet = colorMap[color.toLowerCase()] || '⚫';
-          option.textContent = `${bullet} ${labelText}`;
+          colorCode = mondayColorMap[colorName.toLowerCase()] || colorCode;
         }
+        
+        // Create colored circle using Unicode + CSS
+        const circle = '●';
+        option.textContent = `${circle} ${labelText}`;
+        option.dataset.color = colorName;
+        option.dataset.colorCode = colorCode;
+        option.style.fontWeight = '500';
+        
+        // Apply color to the option
+        option.setAttribute('data-color-style', colorCode);
         
         select.appendChild(option);
       });
     }
+    
+    // Add change event to update select style based on selected option
+    select.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      if (selectedOption && selectedOption.dataset.colorCode) {
+        this.style.color = selectedOption.dataset.colorCode;
+        this.style.fontWeight = '600';
+      } else {
+        this.style.color = '#333';
+        this.style.fontWeight = '400';
+      }
+    });
     
     return select;
   }

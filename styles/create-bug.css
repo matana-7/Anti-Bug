@@ -567,10 +567,86 @@ body {
 
 .monday-field-input.status-input {
   cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
 }
 
 .monday-field-input.status-input option {
-  padding: 8px;
+  padding: 8px 4px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Color each option's circle using CSS */
+.monday-field-input.status-input option[data-color-style] {
+  font-weight: 500;
+}
+
+/* Apply color to individual options */
+.monday-field-input.status-input option[data-color-style]::before {
+  content: '● ';
+  font-weight: bold;
+}
+
+/* Green options */
+.monday-field-input.status-input option[data-color="green"],
+.monday-field-input.status-input option[data-color="bright-green"],
+.monday-field-input.status-input option[data-color="lime"] {
+  color: #00c875;
+}
+
+/* Red options */
+.monday-field-input.status-input option[data-color="red"],
+.monday-field-input.status-input option[data-color="dark-red"],
+.monday-field-input.status-input option[data-color="berry"] {
+  color: #e2445c;
+}
+
+/* Orange options */
+.monday-field-input.status-input option[data-color="orange"] {
+  color: #fdab3d;
+}
+
+/* Yellow options */
+.monday-field-input.status-input option[data-color="yellow"] {
+  color: #ffcb00;
+}
+
+/* Blue options */
+.monday-field-input.status-input option[data-color="blue"],
+.monday-field-input.status-input option[data-color="dark-blue"] {
+  color: #0086c0;
+}
+
+/* Purple options */
+.monday-field-input.status-input option[data-color="purple"],
+.monday-field-input.status-input option[data-color="dark-purple"],
+.monday-field-input.status-input option[data-color="indigo"] {
+  color: #a25ddc;
+}
+
+/* Pink options */
+.monday-field-input.status-input option[data-color="pink"],
+.monday-field-input.status-input option[data-color="magenta"] {
+  color: #ff158a;
+}
+
+/* Gray options */
+.monday-field-input.status-input option[data-color="gray"],
+.monday-field-input.status-input option[data-color="grey"],
+.monday-field-input.status-input option[data-color="dark-gray"],
+.monday-field-input.status-input option[data-color="dark-grey"] {
+  color: #808080;
+}
+
+/* Brown options */
+.monday-field-input.status-input option[data-color="brown"] {
+  color: #7e3b3a;
+}
+
+/* Aquamarine options */
+.monday-field-input.status-input option[data-color="aquamarine"] {
+  color: #4eccc6;
 }
 
 .monday-field-checkbox {
