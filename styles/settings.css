@@ -36,10 +36,10 @@ body {
 }
 
 .settings-header .header-logo {
-  width: 36px;
-  height: 36px;
-  padding: 14px;
-  border-radius: 6px;
+  width: 56px;
+  height: 56px;
+  padding: 12px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.20);
   transition: all 150ms ease;
   cursor: pointer;
