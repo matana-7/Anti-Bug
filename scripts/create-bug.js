@@ -15,6 +15,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   const boardSelect = document.getElementById('boardSelect');
   const groupSelect = document.getElementById('groupSelect');
 
+  // Easter Egg: Click logo to open random Oggy video
+  const logoImg = document.querySelector('.header-logo');
+  if (logoImg) {
+    logoImg.style.cursor = 'pointer';
+    logoImg.addEventListener('click', () => {
+      const oggyVideos = [
+        'https://www.youtube.com/watch?v=tVNDKzkV7DM',
+        'https://www.youtube.com/watch?v=qBpVT8xPXOo',
+        'https://www.youtube.com/watch?v=Bn8y7cMWN7I',
+        'https://www.youtube.com/watch?v=2n0ySLbYC5k',
+        'https://www.youtube.com/watch?v=k-zFG2oApZs',
+        'https://www.youtube.com/watch?v=EixuS-GwZDg',
+        'https://www.youtube.com/watch?v=pYw-b6BUE_g',
+        'https://www.youtube.com/watch?v=m_aMss1p8EQ',
+        'https://www.youtube.com/watch?v=VNwjl3k1SGs',
+        'https://www.youtube.com/watch?v=oQDEFHBzN_Y'
+      ];
+      const randomVideo = oggyVideos[Math.floor(Math.random() * oggyVideos.length)];
+      chrome.tabs.create({ url: randomVideo });
+    });
+  }
+
   // Check if we're returning from a screenshot capture
   const state = await chrome.storage.local.get(['returnToCreateBug', 'createBugState', 'annotatedScreenshot']);
   if (state.returnToCreateBug && state.createBugState) {
@@ -131,6 +153,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   fileInput.addEventListener('change', () => {
     handleFiles(fileInput.files);
+  });
+
+  // Paste functionality - listen for paste events on the document
+  document.addEventListener('paste', (e) => {
+    console.log('Paste event detected');
+    
+    // Get clipboard items
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const files = [];
+    
+    // Process clipboard items
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      // Check if item is a file
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        if (file) {
+          console.log('Pasted file:', file.name, file.type);
+          files.push(file);
+        }
+      }
+    }
+
+    // Handle the pasted files
+    if (files.length > 0) {
+      // Convert FileList-like array to actual array and process
+      handleFiles(files);
+      
+      // Show success feedback
+      const dropZone = document.getElementById('dropZone');
+      dropZone.style.borderColor = '#28a745';
+      dropZone.style.background = 'rgba(40, 167, 69, 0.1)';
+      setTimeout(() => {
+        dropZone.style.borderColor = '';
+        dropZone.style.background = '';
+      }, 1000);
+    }
   });
 
   async function loadBoards() {

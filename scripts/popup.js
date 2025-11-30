@@ -4,6 +4,27 @@ let allBugs = []; // Store all bugs for client-side filtering
 let filteredBugs = []; // Currently displayed bugs
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Easter Egg: Click logo to open random Oggy video
+  const logoImg = document.querySelector('.logo img');
+  if (logoImg) {
+    logoImg.addEventListener('click', () => {
+      const oggyVideos = [
+        'https://www.youtube.com/watch?v=tVNDKzkV7DM',
+        'https://www.youtube.com/watch?v=qBpVT8xPXOo',
+        'https://www.youtube.com/watch?v=Bn8y7cMWN7I',
+        'https://www.youtube.com/watch?v=2n0ySLbYC5k',
+        'https://www.youtube.com/watch?v=k-zFG2oApZs',
+        'https://www.youtube.com/watch?v=EixuS-GwZDg',
+        'https://www.youtube.com/watch?v=pYw-b6BUE_g',
+        'https://www.youtube.com/watch?v=m_aMss1p8EQ',
+        'https://www.youtube.com/watch?v=VNwjl3k1SGs',
+        'https://www.youtube.com/watch?v=oQDEFHBzN_Y'
+      ];
+      const randomVideo = oggyVideos[Math.floor(Math.random() * oggyVideos.length)];
+      chrome.tabs.create({ url: randomVideo });
+    });
+  }
+  
   const settingsBtn = document.getElementById('settingsBtn');
   const createBugBtn = document.getElementById('createBugBtn');
   const bugsList = document.getElementById('bugsList');
