@@ -2,7 +2,6 @@
 
 let attachedFiles = [];
 let screenshotCount = 0;
-let harCaptured = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const bugForm = document.getElementById('bugForm');
@@ -15,7 +14,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const browseBtn = document.getElementById('browseBtn');
   const boardSelect = document.getElementById('boardSelect');
   const groupSelect = document.getElementById('groupSelect');
-  const autoAttachHAR = document.getElementById('autoAttachHAR');
 
   // Check if we're returning from a screenshot capture
   const state = await chrome.storage.local.get(['returnToCreateBug', 'createBugState', 'annotatedScreenshot']);
@@ -936,12 +934,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('Bug data:', bugData);
       console.log('Attachments:', attachedFiles.length);
 
-      // Capture HAR if enabled
-      if (autoAttachHAR.checked) {
-        console.log('Capturing HAR...');
-        await captureHAR();
-      }
-
       // Collect Monday column values
       const columnValues = collectColumnValues();
       console.log('Column values:', columnValues);
@@ -990,13 +982,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (response.uploadResults) {
               const uploaded = response.uploadResults.uploaded || [];
               const failed = response.uploadResults.failed || [];
+              const skipped = response.uploadResults.skipped || [];
               
               if (uploaded.length > 0) {
                 updateProgress(90, `Uploaded ${uploaded.length} file(s)...`);
               }
               
-              // Check if there were any file upload issues
-              if (failed.length > 0) {
+              // Check if there were any skipped files (too large)
+              if (skipped.length > 0) {
+                const skippedFiles = skipped.map(f => f.name).join(', ');
+                showError(`Bug created successfully! However, ${skipped.length} file(s) were too large to upload via the extension: ${skippedFiles}. Please upload them directly to the Monday ticket.`);
+                updateProgress(100, `Bug created (${skipped.length} file(s) skipped)`);
+              } else if (failed.length > 0) {
+                // Check if there were any other file upload issues
                 const failedFiles = failed.map(f => f.name).join(', ');
                 showError(`Bug created, but ${failed.length} file(s) failed to upload: ${failedFiles}. Please upload them manually.`);
                 updateProgress(100, `Bug created (${failed.length} upload failed)`);
@@ -1048,77 +1046,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('submitBtnText').textContent = 'Create & Upload';
       document.getElementById('submitSpinner').style.display = 'none';
       document.getElementById('uploadProgress').style.display = 'none';
-    }
-  }
-
-  async function captureHAR() {
-    try {
-      const settings = await chrome.storage.sync.get(['harConsent']);
-      
-      if (!settings.harConsent) {
-        const consent = confirm(
-          'HAR Capture Consent:\n\n' +
-          'This will capture network traffic from the last 10 minutes, which may include:\n' +
-          '- Authentication tokens\n' +
-          '- Cookies\n' +
-          '- Personal data in URLs and requests\n\n' +
-          'Sensitive headers will be masked by default.\n\n' +
-          'Do you want to proceed?'
-        );
-        
-        if (!consent) {
-          return;
-        }
-        
-        await chrome.storage.sync.set({ harConsent: true });
-      }
-
-      const harStatus = document.getElementById('harStatus');
-      harStatus.innerHTML = '<span class="status-icon">⏳</span><span>Capturing HAR...</span>';
-
-      // Get active tab
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-      chrome.runtime.sendMessage(
-        { action: 'captureHAR', tabId: tab.id, timeframeMinutes: 10 },
-        async (response) => {
-          if (response.success) {
-            // Convert HAR to file with proper data URL
-            const harJson = JSON.stringify(response.har, null, 2);
-            const harBlob = new Blob([harJson], { type: 'application/json' });
-            
-            // Convert blob to data URL using FileReader (not URL.createObjectURL)
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              const tabTitle = tab.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-              const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-              
-              const harFile = {
-                id: `har-${Date.now()}`,
-                name: `bug-${timestamp}-${tabTitle}.har`,
-                dataUrl: e.target.result, // This is now a proper data URL
-                type: 'application/json',
-                size: harBlob.size
-              };
-
-              attachedFiles.push(harFile);
-              harCaptured = true;
-              
-              harStatus.innerHTML = '<span class="status-icon">✅</span><span>HAR captured</span>';
-            };
-            reader.onerror = () => {
-              harStatus.innerHTML = '<span class="status-icon">❌</span><span>HAR capture failed</span>';
-            };
-            reader.readAsDataURL(harBlob);
-          } else {
-            harStatus.innerHTML = '<span class="status-icon">❌</span><span>HAR capture failed</span>';
-          }
-        }
-      );
-    } catch (error) {
-      console.error('HAR capture error:', error);
-      const harStatus = document.getElementById('harStatus');
-      harStatus.innerHTML = '<span class="status-icon">❌</span><span>HAR capture failed</span>';
     }
   }
 
