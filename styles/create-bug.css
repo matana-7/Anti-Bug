@@ -32,9 +32,22 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.modal-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-header .header-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
 .modal-header h2 {
   font-size: 20px;
   font-weight: 600;
+  margin: 0;
 }
 
 .close-btn {
