@@ -43,9 +43,9 @@ body {
 
 .logo .header-logo,
 .logo img {
-  width: 24px;
-  height: 24px;
-  padding: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 10px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.20);
   transition: all 150ms ease;

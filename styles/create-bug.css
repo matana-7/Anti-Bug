@@ -39,9 +39,9 @@ body {
 }
 
 .modal-header .header-logo {
-  width: 26px;
-  height: 26px;
-  padding: 9px;
+  width: 32px;
+  height: 32px;
+  padding: 12px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.20);
   transition: all 150ms ease;
