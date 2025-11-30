@@ -34,17 +34,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // On 17th click, open random video and reset counter
       if (clickCount >= 17) {
+        // Working videos from @oggy YouTube channel
         const oggyVideos = [
-          'https://www.youtube.com/watch?v=5gZCjMAllX8',
-          'https://www.youtube.com/watch?v=UorYYH0E1hg',
-          'https://www.youtube.com/watch?v=Hk_BWeOeg-o',
-          'https://www.youtube.com/watch?v=P0dV_7hqbIw',
-          'https://www.youtube.com/watch?v=Y7JG63IuaB4',
-          'https://www.youtube.com/watch?v=L9jvromKIpQ',
-          'https://www.youtube.com/watch?v=uNRLJHZFK-M',
-          'https://www.youtube.com/watch?v=X3KqfK0lw3k',
-          'https://www.youtube.com/watch?v=dn8FQD-yBvA',
-          'https://www.youtube.com/watch?v=gRGNrMdEJUI'
+          'https://www.youtube.com/watch?v=W4JWRvbV-bo',
+          'https://www.youtube.com/watch?v=zKNXz0C-JeU',
+          'https://www.youtube.com/watch?v=E3wd3F8U_nI',
+          'https://www.youtube.com/watch?v=AW028dIdLXI',
+          'https://www.youtube.com/watch?v=bQ8hNk9pPmE',
+          'https://www.youtube.com/watch?v=zj5c5AiB8Uw',
+          'https://www.youtube.com/watch?v=MvEFELLVEqo',
+          'https://www.youtube.com/watch?v=VDRaKh3oC0M',
+          'https://www.youtube.com/watch?v=kQ9z6TvLEsE',
+          'https://www.youtube.com/watch?v=QVqj6LqbPLs'
         ];
         
         const randomVideo = oggyVideos[Math.floor(Math.random() * oggyVideos.length)];
