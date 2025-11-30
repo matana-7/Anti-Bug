@@ -15,6 +15,49 @@ document.addEventListener('DOMContentLoaded', async () => {
   const boardSelect = document.getElementById('boardSelect');
   const groupSelect = document.getElementById('groupSelect');
 
+  // Easter Egg: Click logo 17 times to open random Oggy video
+  const logoImg = document.querySelector('.header-logo');
+  if (logoImg) {
+    logoImg.style.cursor = 'pointer';
+    logoImg.addEventListener('click', async () => {
+      // Get current click count from storage
+      const result = await chrome.storage.local.get(['oggyClickCount']);
+      let clickCount = result.oggyClickCount || 0;
+      
+      // Increment counter
+      clickCount++;
+      
+      // Save updated count
+      await chrome.storage.local.set({ oggyClickCount: clickCount });
+      
+      console.log(`Oggy easter egg clicks: ${clickCount}/17`);
+      
+      // On 17th click, open random video and reset counter
+      if (clickCount >= 17) {
+        // Working videos from @oggy YouTube channel
+        const oggyVideos = [
+          'https://www.youtube.com/watch?v=4auOwokj2qg',
+          'https://www.youtube.com/watch?v=a8-ySFmij_I',
+          'https://www.youtube.com/watch?v=jfcrY85C_-k',
+          'https://www.youtube.com/watch?v=JmB6a6D-N7M',
+          'https://www.youtube.com/watch?v=-7jAVwbqCUE',
+          'https://www.youtube.com/watch?v=JrjpYGoAbnk',
+          'https://www.youtube.com/watch?v=jQsRsx0pgzc',
+          'https://www.youtube.com/watch?v=Paoy_GPjMt0',
+          'https://www.youtube.com/watch?v=l-__1DzJViE',
+          'https://www.youtube.com/watch?v=rMYZx6pxJLk'
+        ];
+        
+        const randomVideo = oggyVideos[Math.floor(Math.random() * oggyVideos.length)];
+        chrome.tabs.create({ url: randomVideo });
+        
+        // Reset counter
+        await chrome.storage.local.set({ oggyClickCount: 0 });
+        console.log('Oggy easter egg activated! Counter reset.');
+      }
+    });
+  }
+
   // Check if we're returning from a screenshot capture
   const state = await chrome.storage.local.get(['returnToCreateBug', 'createBugState', 'annotatedScreenshot']);
   if (state.returnToCreateBug && state.createBugState) {
@@ -131,6 +174,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   fileInput.addEventListener('change', () => {
     handleFiles(fileInput.files);
+  });
+
+  // Paste functionality - listen for paste events on the document
+  document.addEventListener('paste', (e) => {
+    console.log('Paste event detected');
+    
+    // Get clipboard items
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const files = [];
+    
+    // Process clipboard items
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      // Check if item is a file
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        if (file) {
+          console.log('Pasted file:', file.name, file.type);
+          files.push(file);
+        }
+      }
+    }
+
+    // Handle the pasted files
+    if (files.length > 0) {
+      // Convert FileList-like array to actual array and process
+      handleFiles(files);
+      
+      // Show success feedback
+      const dropZone = document.getElementById('dropZone');
+      dropZone.style.borderColor = '#28a745';
+      dropZone.style.background = 'rgba(40, 167, 69, 0.1)';
+      setTimeout(() => {
+        dropZone.style.borderColor = '';
+        dropZone.style.background = '';
+      }, 1000);
+    }
   });
 
   async function loadBoards() {

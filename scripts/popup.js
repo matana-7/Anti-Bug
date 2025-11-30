@@ -4,6 +4,48 @@ let allBugs = []; // Store all bugs for client-side filtering
 let filteredBugs = []; // Currently displayed bugs
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Easter Egg: Click logo 17 times to open random Oggy video
+  const logoImg = document.querySelector('.logo img');
+  if (logoImg) {
+    logoImg.addEventListener('click', async () => {
+      // Get current click count from storage
+      const result = await chrome.storage.local.get(['oggyClickCount']);
+      let clickCount = result.oggyClickCount || 0;
+      
+      // Increment counter
+      clickCount++;
+      
+      // Save updated count
+      await chrome.storage.local.set({ oggyClickCount: clickCount });
+      
+      console.log(`Oggy easter egg clicks: ${clickCount}/17`);
+      
+      // On 17th click, open random video and reset counter
+      if (clickCount >= 17) {
+        // Working videos from @oggy YouTube channel
+        const oggyVideos = [
+          'https://www.youtube.com/watch?v=4auOwokj2qg',
+          'https://www.youtube.com/watch?v=a8-ySFmij_I',
+          'https://www.youtube.com/watch?v=jfcrY85C_-k',
+          'https://www.youtube.com/watch?v=JmB6a6D-N7M',
+          'https://www.youtube.com/watch?v=-7jAVwbqCUE',
+          'https://www.youtube.com/watch?v=JrjpYGoAbnk',
+          'https://www.youtube.com/watch?v=jQsRsx0pgzc',
+          'https://www.youtube.com/watch?v=Paoy_GPjMt0',
+          'https://www.youtube.com/watch?v=l-__1DzJViE',
+          'https://www.youtube.com/watch?v=rMYZx6pxJLk'
+        ];
+        
+        const randomVideo = oggyVideos[Math.floor(Math.random() * oggyVideos.length)];
+        chrome.tabs.create({ url: randomVideo });
+        
+        // Reset counter
+        await chrome.storage.local.set({ oggyClickCount: 0 });
+        console.log('Oggy easter egg activated! Counter reset.');
+      }
+    });
+  }
+  
   const settingsBtn = document.getElementById('settingsBtn');
   const createBugBtn = document.getElementById('createBugBtn');
   const bugsList = document.getElementById('bugsList');
