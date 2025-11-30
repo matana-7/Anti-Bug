@@ -15,25 +15,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   const boardSelect = document.getElementById('boardSelect');
   const groupSelect = document.getElementById('groupSelect');
 
-  // Easter Egg: Click logo to open random Oggy video
+  // Easter Egg: Click logo 17 times to open random Oggy video
   const logoImg = document.querySelector('.header-logo');
   if (logoImg) {
     logoImg.style.cursor = 'pointer';
-    logoImg.addEventListener('click', () => {
-      const oggyVideos = [
-        'https://www.youtube.com/watch?v=tVNDKzkV7DM',
-        'https://www.youtube.com/watch?v=qBpVT8xPXOo',
-        'https://www.youtube.com/watch?v=Bn8y7cMWN7I',
-        'https://www.youtube.com/watch?v=2n0ySLbYC5k',
-        'https://www.youtube.com/watch?v=k-zFG2oApZs',
-        'https://www.youtube.com/watch?v=EixuS-GwZDg',
-        'https://www.youtube.com/watch?v=pYw-b6BUE_g',
-        'https://www.youtube.com/watch?v=m_aMss1p8EQ',
-        'https://www.youtube.com/watch?v=VNwjl3k1SGs',
-        'https://www.youtube.com/watch?v=oQDEFHBzN_Y'
-      ];
-      const randomVideo = oggyVideos[Math.floor(Math.random() * oggyVideos.length)];
-      chrome.tabs.create({ url: randomVideo });
+    logoImg.addEventListener('click', async () => {
+      // Get current click count from storage
+      const result = await chrome.storage.local.get(['oggyClickCount']);
+      let clickCount = result.oggyClickCount || 0;
+      
+      // Increment counter
+      clickCount++;
+      
+      // Save updated count
+      await chrome.storage.local.set({ oggyClickCount: clickCount });
+      
+      console.log(`Oggy easter egg clicks: ${clickCount}/17`);
+      
+      // On 17th click, open random video and reset counter
+      if (clickCount >= 17) {
+        const oggyVideos = [
+          'https://www.youtube.com/watch?v=5gZCjMAllX8',
+          'https://www.youtube.com/watch?v=UorYYH0E1hg',
+          'https://www.youtube.com/watch?v=Hk_BWeOeg-o',
+          'https://www.youtube.com/watch?v=P0dV_7hqbIw',
+          'https://www.youtube.com/watch?v=Y7JG63IuaB4',
+          'https://www.youtube.com/watch?v=L9jvromKIpQ',
+          'https://www.youtube.com/watch?v=uNRLJHZFK-M',
+          'https://www.youtube.com/watch?v=X3KqfK0lw3k',
+          'https://www.youtube.com/watch?v=dn8FQD-yBvA',
+          'https://www.youtube.com/watch?v=gRGNrMdEJUI'
+        ];
+        
+        const randomVideo = oggyVideos[Math.floor(Math.random() * oggyVideos.length)];
+        chrome.tabs.create({ url: randomVideo });
+        
+        // Reset counter
+        await chrome.storage.local.set({ oggyClickCount: 0 });
+        console.log('Oggy easter egg activated! Counter reset.');
+      }
     });
   }
 
