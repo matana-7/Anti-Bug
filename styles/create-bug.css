@@ -32,9 +32,33 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.modal-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.modal-header .header-logo {
+  width: 48px;
+  height: 48px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.20);
+  transition: all 150ms ease;
+  cursor: pointer;
+  object-fit: contain;
+}
+
+.modal-header .header-logo:hover {
+  transform: scale(1.07);
+  filter: brightness(1.15);
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .modal-header h2 {
   font-size: 20px;
   font-weight: 600;
+  margin: 0;
 }
 
 .close-btn {

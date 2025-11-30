@@ -9,7 +9,10 @@
 <body>
   <div class="settings-container">
     <header class="settings-header">
-      <h1>Anti Bugs Settings</h1>
+      <div class="header-content">
+        <img src="icons/icon128.png" alt="Anti Bugs" class="header-logo">
+        <h1>Anti Bugs Settings</h1>
+      </div>
     </header>
 
     <div class="settings-content">
@@ -92,41 +95,6 @@
 
         <button type="button" class="primary-btn" id="saveSelectionBtn">Save Selection</button>
       </section>
-
-      <!-- HAR Capture Settings -->
-      <section class="settings-section">
-        <h2>HAR Capture Settings</h2>
-        
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="autoAttachHAR" checked>
-            <span>Automatically attach HAR file to new bugs</span>
-          </label>
-        </div>
-
-        <div class="form-group">
-          <label for="harTimeframe">HAR Timeframe (minutes):</label>
-          <input type="number" id="harTimeframe" min="1" max="60" value="10">
-          <small class="help-text">Network traffic from the last N minutes</small>
-        </div>
-
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="maskSensitiveHeaders" checked>
-            <span>Mask sensitive headers (Authorization, Cookie)</span>
-          </label>
-        </div>
-
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="maskQueryStrings">
-            <span>Mask query strings in URLs</span>
-          </label>
-        </div>
-
-        <button type="button" class="primary-btn" id="saveHARSettingsBtn">Save HAR Settings</button>
-      </section>
-
       <!-- Privacy & Consent -->
       <section class="settings-section">
         <h2>Privacy & Consent</h2>
@@ -134,27 +102,9 @@
         <div class="privacy-notice">
           <h3>⚠️ Important Privacy Information</h3>
           <p>
-            <strong>HAR Capture:</strong> When enabled, this extension captures network traffic including:
+            <strong>Screenshots:</strong> Screenshots may capture visible personal information on your screen.
+            Please review screenshots before submitting bug reports to ensure no sensitive data is included.
           </p>
-          <ul>
-            <li>Request and response headers (may contain authentication tokens)</li>
-            <li>Cookies and session information</li>
-            <li>URLs with query parameters (may contain personal data)</li>
-            <li>Request and response bodies (may contain sensitive information)</li>
-          </ul>
-          <p>
-            <strong>Screenshots:</strong> May capture visible personal information on your screen.
-          </p>
-          <p>
-            We recommend enabling header masking and reviewing captured data before submitting.
-          </p>
-        </div>
-
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="harConsent">
-            <span>I understand and consent to HAR capture</span>
-          </label>
         </div>
 
         <div class="form-group">

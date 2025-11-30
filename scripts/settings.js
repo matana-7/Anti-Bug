@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('disconnectBtn').addEventListener('click', disconnect);
   document.getElementById('boardSelect').addEventListener('change', loadGroups);
   document.getElementById('saveSelectionBtn').addEventListener('click', saveSelection);
-  document.getElementById('saveHARSettingsBtn').addEventListener('click', saveHARSettings);
   document.getElementById('saveConsentBtn').addEventListener('click', saveConsent);
   document.getElementById('clearDataBtn').addEventListener('click', clearData);
   
@@ -50,11 +49,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         'mondayToken',
         'selectedBoardId',
         'selectedGroupId',
-        'autoAttachHAR',
-        'harTimeframe',
-        'maskSensitiveHeaders',
-        'maskQueryStrings',
-        'harConsent',
         'screenshotConsent'
       ]);
 
@@ -65,14 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadBoards(settings.mondayToken);
       }
 
-      // HAR settings
-      document.getElementById('autoAttachHAR').checked = settings.autoAttachHAR !== false;
-      document.getElementById('harTimeframe').value = settings.harTimeframe || 10;
-      document.getElementById('maskSensitiveHeaders').checked = settings.maskSensitiveHeaders !== false;
-      document.getElementById('maskQueryStrings').checked = settings.maskQueryStrings || false;
-
       // Consent
-      document.getElementById('harConsent').checked = settings.harConsent || false;
       document.getElementById('screenshotConsent').checked = settings.screenshotConsent !== false;
 
       // Board/Group selection
@@ -348,25 +335,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  async function saveHARSettings() {
-    try {
-      await chrome.storage.sync.set({
-        autoAttachHAR: document.getElementById('autoAttachHAR').checked,
-        harTimeframe: parseInt(document.getElementById('harTimeframe').value),
-        maskSensitiveHeaders: document.getElementById('maskSensitiveHeaders').checked,
-        maskQueryStrings: document.getElementById('maskQueryStrings').checked
-      });
-      
-      alert('HAR settings saved successfully');
-    } catch (error) {
-      alert('Failed to save HAR settings: ' + error.message);
-    }
-  }
-
   async function saveConsent() {
     try {
       await chrome.storage.sync.set({
-        harConsent: document.getElementById('harConsent').checked,
         screenshotConsent: document.getElementById('screenshotConsent').checked
       });
       

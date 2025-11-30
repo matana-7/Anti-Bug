@@ -441,12 +441,13 @@ export class MondayAPI {
 
   async addFilesToItem(itemId, files, progressCallback = null) {
     if (!files || files.length === 0) {
-      return { success: true, uploaded: [], failed: [] };
+      return { success: true, uploaded: [], failed: [], skipped: [] };
     }
 
     const results = {
       uploaded: [],
-      failed: []
+      failed: [],
+      skipped: []
     };
 
     // Create ONE update for all attachments
@@ -474,7 +475,8 @@ export class MondayAPI {
       console.error('Failed to create update:', error);
       return {
         uploaded: [],
-        failed: files.map(f => ({ name: f.name, error: 'Could not create update for attachments' }))
+        failed: [],
+        skipped: files.map(f => ({ name: f.name, error: 'Could not create update for attachments' }))
       };
     }
 
@@ -512,17 +514,33 @@ export class MondayAPI {
         }
       } catch (error) {
         console.error(`Failed to upload file ${file.name}:`, error);
-        results.failed.push({
-          name: file.name,
-          error: error.message
-        });
+        
+        // Check if this is a quota exceeded error
+        const isQuotaError = error.message && (
+          error.message.includes('quota') || 
+          error.message.includes('Resource::kQuotaBytes') ||
+          error.message.includes('too large') ||
+          error.message.includes('size limit')
+        );
+        
+        if (isQuotaError) {
+          results.skipped.push({
+            name: file.name,
+            error: 'File too large for upload via extension'
+          });
+        } else {
+          results.failed.push({
+            name: file.name,
+            error: error.message
+          });
+        }
 
         if (progressCallback) {
           progressCallback({
             current: i + 1,
             total: files.length,
             fileName: file.name,
-            status: 'failed',
+            status: isQuotaError ? 'skipped' : 'failed',
             error: error.message
           });
         }

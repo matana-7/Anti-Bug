@@ -24,10 +24,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function handleMessage(message, sender, sendResponse) {
   try {
     switch (message.action) {
-      case 'captureHAR':
-        await handleCaptureHAR(message, sendResponse);
-        break;
-      
       case 'captureScreenshot':
         await handleCaptureScreenshot(message, sendResponse);
         break;
@@ -53,34 +49,6 @@ async function handleMessage(message, sender, sendResponse) {
     }
   } catch (error) {
     console.error('Error handling message:', error);
-    sendResponse({ success: false, error: error.message });
-  }
-}
-
-async function handleCaptureHAR(message, sendResponse) {
-  const { tabId, timeframeMinutes = 10 } = message;
-  
-  try {
-    // Check if user has consented to HAR capture
-    const settings = await chrome.storage.sync.get(['harConsent', 'autoAttachHAR', 'maskSensitiveHeaders']);
-    
-    if (!settings.harConsent) {
-      sendResponse({ 
-        success: false, 
-        error: 'HAR capture requires user consent',
-        needsConsent: true
-      });
-      return;
-    }
-    
-    const har = await harCapture.captureHAR(tabId, timeframeMinutes, {
-      maskAuthHeaders: settings.maskSensitiveHeaders !== false,
-      maskCookies: settings.maskSensitiveHeaders !== false
-    });
-    
-    sendResponse({ success: true, har });
-  } catch (error) {
-    console.error('HAR capture failed:', error);
     sendResponse({ success: false, error: error.message });
   }
 }
