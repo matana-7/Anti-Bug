@@ -25,16 +25,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (clickCount >= 17) {
         // Working videos from @oggy YouTube channel
         const oggyVideos = [
-          'https://www.youtube.com/watch?v=W4JWRvbV-bo',
-          'https://www.youtube.com/watch?v=zKNXz0C-JeU',
-          'https://www.youtube.com/watch?v=E3wd3F8U_nI',
-          'https://www.youtube.com/watch?v=AW028dIdLXI',
-          'https://www.youtube.com/watch?v=bQ8hNk9pPmE',
-          'https://www.youtube.com/watch?v=zj5c5AiB8Uw',
-          'https://www.youtube.com/watch?v=MvEFELLVEqo',
-          'https://www.youtube.com/watch?v=VDRaKh3oC0M',
-          'https://www.youtube.com/watch?v=kQ9z6TvLEsE',
-          'https://www.youtube.com/watch?v=QVqj6LqbPLs'
+          'https://www.youtube.com/watch?v=4auOwokj2qg',
+          'https://www.youtube.com/watch?v=a8-ySFmij_I',
+          'https://www.youtube.com/watch?v=jfcrY85C_-k',
+          'https://www.youtube.com/watch?v=JmB6a6D-N7M',
+          'https://www.youtube.com/watch?v=-7jAVwbqCUE',
+          'https://www.youtube.com/watch?v=JrjpYGoAbnk',
+          'https://www.youtube.com/watch?v=jQsRsx0pgzc',
+          'https://www.youtube.com/watch?v=Paoy_GPjMt0',
+          'https://www.youtube.com/watch?v=l-__1DzJViE',
+          'https://www.youtube.com/watch?v=rMYZx6pxJLk'
         ];
         
         const randomVideo = oggyVideos[Math.floor(Math.random() * oggyVideos.length)];
